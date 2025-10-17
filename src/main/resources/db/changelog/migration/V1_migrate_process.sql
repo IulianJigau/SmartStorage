@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS process
+(
+    id SERIAL PRIMARY KEY,
+    status INTEGER NOT NULL DEFAULT 1,
+    files_processed INTEGER DEFAULT 0,
+    message VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (status) REFERENCES status(id)
+);

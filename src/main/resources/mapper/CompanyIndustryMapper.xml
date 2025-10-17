@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.java.test.smartstorage.mapper.CompanyIndustryMapper">
+
+    <delete id="dropIndex">
+        DROP INDEX IF EXISTS company_industry_index;
+    </delete>
+
+    <insert id="createIndex">
+        CREATE INDEX company_industry_index ON company_industry (corporate_number, process_id, business_item_id);
+    </insert>
+
+    <select id="getPage" resultMap="companyIndustryFlatResultMap">
+        SELECT *
+        FROM company_industry
+        ORDER BY process_id DESC
+        LIMIT #{size}
+        OFFSET #{size} * (#{page} - 1)
+    </select>
+
+    <select id="getTotalEntries">
+        SELECT COUNT(*)
+        FROM company_industry
+    </select>
+
+    <delete id="deleteAll">
+        DELETE FROM company_industry;
+    </delete>
+
+    <resultMap id="companyIndustryFlatResultMap" type="CompanyIndustryFlat">
+        <id property="processId" column="process_id" />
+        <id property="corporateNumber" column="corporate_number" />
+        <id property="businessItemId" column="business_item_id" />
+    </resultMap>
+</mapper>

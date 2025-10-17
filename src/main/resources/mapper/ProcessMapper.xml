@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.java.test.smartstorage.mapper.ProcessMapper">
+
+    <select id="create" resultType="int">
+        INSERT INTO process DEFAULT VALUES RETURNING id;
+    </select>
+
+    <select id="getPage" resultMap="processResultMap">
+        SELECT *
+        FROM process
+        ORDER BY id DESC
+        LIMIT #{size}
+            OFFSET #{size} * (#{page} - 1)
+    </select>
+
+    <select id="getTotalEntries">
+        SELECT COUNT(*)
+        FROM process
+    </select>
+
+    <update id="incrementProcessedFiles" parameterType="int">
+        UPDATE process
+        SET files_processed = files_processed + 1,
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus" parameterType="map">
+        UPDATE process
+        SET status = #{status},
+            message = #{message},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteAll">
+        DELETE FROM process;
+    </delete>
+
+    <resultMap id="processResultMap" type="Process">
+        <id property="id" column="id" />
+        <result property="status" column="status" />
+        <result property="filesProcessed" column="files_processed" />
+        <result property="message" column="message" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+    </resultMap>
+</mapper>

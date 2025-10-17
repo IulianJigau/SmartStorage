@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: none
+  - include:
+      file: migration/V1_migrate_status.sql
+      relativeToChangelogFile: true
+  - include:
+      file: migration/V1_migrate_process.sql
+      relativeToChangelogFile: true
+  - include:
+      file: migration/V1_migrate_company.sql
+      relativeToChangelogFile: true
+  - include:
+      file: migration/V1_migrate_company_industry.sql
+      relativeToChangelogFile: true
+  - include:
+      file: migration/V1_migrate_defaults.sql
+      relativeToChangelogFile: true

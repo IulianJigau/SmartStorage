@@ -1,7 +1,7 @@
 package com.java.test.smartstorage.service.processService;
 
 import com.java.test.smartstorage.mapper.ProcessMapper;
-import com.java.test.smartstorage.model.jsonMap.Process;
+import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.response.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

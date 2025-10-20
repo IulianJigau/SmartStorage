@@ -1,6 +1,7 @@
 package com.java.test.smartstorage.service.companyService;
 
 import com.java.test.smartstorage.mapper.CompanyMapper;
+import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.jsonMap.Company;
 import com.java.test.smartstorage.model.response.PaginationResponse;
 import com.java.test.smartstorage.service.ImportService;
@@ -29,12 +30,14 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
+        Process process = new Process();
+
         return outputStream -> {
             Utility.writeOutput("Dropping the index", outputStream);
             dropIndex();
 
             Utility.writeOutput("Processing files", outputStream);
-            importService.importEntity(new Company(), file, outputStream);
+            importService.importEntity(new Company(), file, outputStream, process);
 
             Utility.writeOutput("Creating the index", outputStream);
             createIndex();

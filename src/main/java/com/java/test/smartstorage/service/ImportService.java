@@ -8,12 +8,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.java.test.smartstorage.component.StatusCodes;
 import com.java.test.smartstorage.exception.ResourceValidationException;
+import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
 import com.java.test.smartstorage.model.jsonMap.Identifiable;
 import com.java.test.smartstorage.model.jsonMap.Mapper;
-import com.java.test.smartstorage.service.processService.ProcessService;
 import com.java.test.smartstorage.util.Utility;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +40,6 @@ public class ImportService {
     private static final String JSON_EXTENSION = ".json";
     private final ObjectMapper objectMapper;
     private final DataSource dataSource;
-    private final ProcessService processService;
-    private final StatusCodes statusCodes;
     private CsvMapper csvMapper;
 
     @PostConstruct
@@ -177,8 +174,7 @@ public class ImportService {
         }
     }
 
-    public <T extends Identifiable & Mapper<T, R>, R> void importEntity(T mapObject, MultipartFile file, OutputStream outputStream) {
-        int process_id = processService.create();
+    public <T extends Identifiable & Mapper<T, R>, R> void importEntity(T mapObject, MultipartFile file, OutputStream outputStream, Process process) {
         Utility.resetCounter();
 
         try {
@@ -197,7 +193,7 @@ public class ImportService {
                                                         parser_object ->
                                                         {
                                                             T object = mapJsonObject(parser_object, mapObject.retrieveInitialClass());
-                                                            object.setProcessId(process_id);
+                                                            object.setProcessId(process.getId());
                                                             List<R> transformedObject = object.flatten();
                                                             writeSequence(sequenceWriter, transformedObject);
                                                         }
@@ -205,7 +201,7 @@ public class ImportService {
 
                                         );
                                         Utility.writeOutput("Files processed: " + Utility.getCounter(), outputStream);
-                                        processService.incrementProcessedFiles(process_id);
+                                        process.incrementProcessedFiles();
                                     }
                             )
                     ),
@@ -218,10 +214,10 @@ public class ImportService {
                     )
             );
         } catch (Exception e) {
-            processService.updateStatus(process_id, statusCodes.getFailed(), e.getMessage());
+            process.setFailed(e.getMessage());
             throw e;
         }
 
-        processService.updateStatus(process_id, statusCodes.getCompleted(), "Import completed");
+        process.setCompleted("Import completed successfully");
     }
 }

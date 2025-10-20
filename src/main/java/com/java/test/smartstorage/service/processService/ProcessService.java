@@ -1,6 +1,6 @@
 package com.java.test.smartstorage.service.processService;
 
-import com.java.test.smartstorage.model.jsonMap.Process;
+import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.response.PaginationResponse;
 
 public interface ProcessService {

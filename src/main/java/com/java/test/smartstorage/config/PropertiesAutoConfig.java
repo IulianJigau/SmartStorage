@@ -6,4 +6,4 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @AutoConfiguration
 @EnableConfigurationProperties(StatusCodes.class)
-public class PropertiesAutoConfiguration {}
+public class PropertiesAutoConfig {}

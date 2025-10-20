@@ -1,6 +1,7 @@
 package com.java.test.smartstorage.service.companyIndustryService;
 
 import com.java.test.smartstorage.mapper.CompanyIndustryMapper;
+import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.jsonMap.Company;
 import com.java.test.smartstorage.model.jsonMap.companyIndustry.CompanyIndustry;
 import com.java.test.smartstorage.model.jsonMap.companyIndustry.CompanyIndustryFlat;
@@ -31,12 +32,14 @@ public class CompanyIndustryServiceImpl implements CompanyIndustryService {
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
+        Process process = new Process();
+
         return outputStream -> {
             Utility.writeOutput("Dropping the index", outputStream);
             dropIndex();
 
             Utility.writeOutput("Processing files", outputStream);
-            importService.importEntity(new CompanyIndustry(), file, outputStream);
+            importService.importEntity(new CompanyIndustry(), file, outputStream, process);
 
             Utility.writeOutput("Creating the index", outputStream);
             createIndex();

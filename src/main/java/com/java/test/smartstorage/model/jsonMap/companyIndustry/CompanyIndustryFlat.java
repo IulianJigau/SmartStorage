@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.model.maps.companyIndustry;
+package com.java.test.smartstorage.model.jsonMap.companyIndustry;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -10,10 +10,11 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.java.test.smartstorage.component.StatusCodes;
 import com.java.test.smartstorage.exception.ResourceValidationException;
-import com.java.test.smartstorage.model.intermediary.ImportSettings;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
-import com.java.test.smartstorage.model.maps.Identifiable;
+import com.java.test.smartstorage.model.jsonMap.Identifiable;
+import com.java.test.smartstorage.model.jsonMap.Mapper;
 import com.java.test.smartstorage.service.processService.ProcessService;
+import com.java.test.smartstorage.util.Utility;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.postgresql.PGConnection;
@@ -30,7 +31,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -91,15 +91,6 @@ public class ImportService {
         } catch (IOException e) {
             throw new ResourceValidationException("Mismatched data structure");
         }
-    }
-
-    private <T, R> List<R> transformObject(T object, Function<T, List<R>> transform) {
-        return transform.apply(object);
-    }
-
-    private Identifiable appendProcessId(Identifiable object, int process_id) {
-        object.setProcessId(process_id);
-        return object;
     }
 
     private <T> T mapJsonObject(JsonParser parser, Class<T> inputClass) {
@@ -186,14 +177,15 @@ public class ImportService {
         }
     }
 
-    public <T extends Identifiable, R> void importEntity(ImportSettings<T, R> importSettings, MultipartFile file) {
+    public <T extends Identifiable & Mapper<T, R>, R> void importEntity(T mapObject, MultipartFile file, OutputStream outputStream) {
         int process_id = processService.create();
+        Utility.resetCounter();
 
         try {
             initializeReadWrite(
                     pipedWriter -> executeUsingSequenceWriter(
                             pipedWriter,
-                            importSettings.getOutputClass(),
+                            mapObject.retrieveFlatClass(),
                             sequenceWriter -> executeOnExtraction(
                                     file,
                                     openedFile -> {
@@ -204,14 +196,15 @@ public class ImportService {
                                                         parser_array,
                                                         parser_object ->
                                                         {
-                                                            T object = mapJsonObject(parser_object, importSettings.getInputClass());
-                                                            appendProcessId(object, process_id);
-                                                            List<R> transformedObject = transformObject(object, importSettings.getTransformer());
+                                                            T object = mapJsonObject(parser_object, mapObject.retrieveInitialClass());
+                                                            object.setProcessId(process_id);
+                                                            List<R> transformedObject = object.flatten();
                                                             writeSequence(sequenceWriter, transformedObject);
                                                         }
                                                 )
 
                                         );
+                                        Utility.writeOutput("Files processed: " + Utility.getCounter(), outputStream);
                                         processService.incrementProcessedFiles(process_id);
                                     }
                             )
@@ -220,7 +213,7 @@ public class ImportService {
                             copyManager -> copyFromPipe(
                                     copyManager,
                                     pipedReader,
-                                    importSettings.getSqlCopy()
+                                    mapObject.retrieveCopyQuery()
                             )
                     )
             );

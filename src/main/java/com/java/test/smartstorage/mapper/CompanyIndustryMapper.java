@@ -1,6 +1,6 @@
 package com.java.test.smartstorage.mapper;
 
-import com.java.test.smartstorage.model.maps.companyIndustry.CompanyIndustryFlat;
+import com.java.test.smartstorage.model.jsonMap.companyIndustry.CompanyIndustryFlat;
 
 import java.util.List;
 

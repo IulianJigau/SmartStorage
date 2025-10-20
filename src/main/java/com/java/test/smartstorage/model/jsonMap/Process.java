@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.model.maps;
+package com.java.test.smartstorage.model.jsonMap;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @RestController
 @RequestMapping("/company")
@@ -16,8 +17,8 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @PostMapping()
-    public void importCompany(@RequestParam MultipartFile file) {
-        companyService.importFromArchive(file);
+    public StreamingResponseBody importCompany(@RequestParam MultipartFile file) {
+        return companyService.importFromArchive(file);
     }
 
     @GetMapping()

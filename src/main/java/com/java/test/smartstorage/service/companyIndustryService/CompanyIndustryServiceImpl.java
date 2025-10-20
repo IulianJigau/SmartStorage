@@ -1,21 +1,21 @@
 package com.java.test.smartstorage.service.companyIndustryService;
 
-import com.java.test.smartstorage.component.SqlQueries;
 import com.java.test.smartstorage.mapper.CompanyIndustryMapper;
-import com.java.test.smartstorage.model.intermediary.ImportSettings;
-import com.java.test.smartstorage.model.maps.companyIndustry.CompanyIndustry;
-import com.java.test.smartstorage.model.maps.companyIndustry.CompanyIndustryFlat;
+import com.java.test.smartstorage.model.jsonMap.Company;
+import com.java.test.smartstorage.model.jsonMap.companyIndustry.CompanyIndustry;
+import com.java.test.smartstorage.model.jsonMap.companyIndustry.CompanyIndustryFlat;
 import com.java.test.smartstorage.model.response.PaginationResponse;
 import com.java.test.smartstorage.service.ImportService;
+import com.java.test.smartstorage.util.Utility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @Service
 @RequiredArgsConstructor
 public class CompanyIndustryServiceImpl implements CompanyIndustryService {
 
-    private final SqlQueries sqlQueries;
     private final CompanyIndustryMapper companyIndustryMapper;
     private final ImportService importService;
 
@@ -30,18 +30,17 @@ public class CompanyIndustryServiceImpl implements CompanyIndustryService {
     }
 
     @Override
-    public void importFromArchive(MultipartFile file) {
-        ImportSettings<CompanyIndustry, CompanyIndustryFlat> importSettings =
-                new ImportSettings<>(
-                        CompanyIndustry.class,
-                        CompanyIndustry::flatten,
-                        CompanyIndustryFlat.class,
-                        sqlQueries.COPY_COMPANY_INDUSTRY
-                );
+    public StreamingResponseBody importFromArchive(MultipartFile file) {
+        return outputStream -> {
+            Utility.writeOutput("Dropping the index", outputStream);
+            dropIndex();
 
-        dropIndex();
-        importService.importEntity(importSettings, file);
-        createIndex();
+            Utility.writeOutput("Processing files", outputStream);
+            importService.importEntity(new CompanyIndustry(), file, outputStream);
+
+            Utility.writeOutput("Creating the index", outputStream);
+            createIndex();
+        };
     }
 
     @Override

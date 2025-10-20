@@ -1,6 +1,6 @@
 package com.java.test.smartstorage.mapper;
 
-import com.java.test.smartstorage.model.maps.Process;
+import com.java.test.smartstorage.model.jsonMap.Process;
 
 import java.util.List;
 

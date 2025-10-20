@@ -11,6 +11,5 @@ CREATE TABLE IF NOT EXISTS company (
     qualification_grade     VARCHAR(50),
     update_date             TIMESTAMPTZ,
     date_of_establishment   DATE,
-    UNIQUE (process_id, corporate_number),
     FOREIGN KEY (process_id) REFERENCES process(id) ON DELETE CASCADE
 );

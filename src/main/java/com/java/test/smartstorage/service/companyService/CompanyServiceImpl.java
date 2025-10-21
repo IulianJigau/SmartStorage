@@ -41,6 +41,9 @@ public class CompanyServiceImpl implements CompanyService {
 
             Utility.writeOutput("Creating the index", outputStream);
             createIndex();
+
+            Utility.writeOutput("Removing Duplicates", outputStream);
+            removeDuplicates();
         };
     }
 
@@ -52,5 +55,10 @@ public class CompanyServiceImpl implements CompanyService {
     @Override
     public void delete() {
         companyMapper.deleteAll();
+    }
+
+    @Override
+    public void removeDuplicates() {
+        companyMapper.removeDuplicates();
     }
 }

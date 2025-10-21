@@ -43,6 +43,9 @@ public class CompanyIndustryServiceImpl implements CompanyIndustryService {
 
             Utility.writeOutput("Creating the index", outputStream);
             createIndex();
+
+            Utility.writeOutput("Removing Duplicates", outputStream);
+            removeDuplicates();
         };
     }
 
@@ -54,5 +57,10 @@ public class CompanyIndustryServiceImpl implements CompanyIndustryService {
     @Override
     public void delete() {
         companyIndustryMapper.deleteAll();
+    }
+
+    @Override
+    public void removeDuplicates() {
+        companyIndustryMapper.removeDuplicates();
     }
 }

@@ -4,12 +4,23 @@
 
 <mapper namespace="com.java.test.smartstorage.mapper.CompanyIndustryMapper">
 
+    <delete id="removeDuplicates">
+        DELETE
+        FROM company_industry
+            USING (SELECT MIN(process_id) as keep_process_id, corporate_number, update_date
+                   FROM company_industry
+                   GROUP BY corporate_number, update_date) reference
+        WHERE company_industry.corporate_number = reference.corporate_number
+          AND company_industry.update_date = reference.update_date
+          AND company_industry.process_id != reference.keep_process_id
+    </delete>
+
     <delete id="dropIndex">
         DROP INDEX IF EXISTS company_industry_index;
     </delete>
 
     <insert id="createIndex">
-        CREATE INDEX company_industry_index ON company_industry (corporate_number, process_id, business_item_id);
+        CREATE INDEX company_industry_index ON company_industry (corporate_number, update_date);
     </insert>
 
     <select id="getPage" resultMap="companyIndustryFlatResultMap">
@@ -26,7 +37,7 @@
     </select>
 
     <delete id="deleteAll">
-        DELETE FROM company_industry;
+        TRUNCATE company_industry;
     </delete>
 
     <resultMap id="companyIndustryFlatResultMap" type="CompanyIndustryFlat">

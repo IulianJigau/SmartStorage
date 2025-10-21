@@ -15,4 +15,6 @@ public interface CompanyMapper {
     long getTotalEntries();
 
     void deleteAll();
+
+    void removeDuplicates();
 }

@@ -5,6 +5,7 @@ import com.java.test.smartstorage.model.jsonMap.Mapper;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ public class CompanyIndustry implements Identifiable, Mapper<CompanyIndustry, Co
     private int processId;
     private Long corporateNumber;
     private List<Integer> businessItems;
+    private OffsetDateTime updateDate;
 
     @Override
     public Class<CompanyIndustry> retrieveInitialClass() {
@@ -29,7 +31,7 @@ public class CompanyIndustry implements Identifiable, Mapper<CompanyIndustry, Co
     public List<CompanyIndustryFlat> flatten() {
         if (businessItems == null) return null;
         return businessItems.stream()
-                .map(businessItemId -> new CompanyIndustryFlat(processId, corporateNumber, businessItemId))
+                .map(businessItemId -> new CompanyIndustryFlat(processId, corporateNumber, businessItemId, updateDate))
                 .collect(Collectors.toList());
     }
 
@@ -39,7 +41,8 @@ public class CompanyIndustry implements Identifiable, Mapper<CompanyIndustry, Co
                     COPY company_industry(
                         business_item_id,
                         corporate_number,
-                        process_id
+                        process_id,
+                        update_date
                     ) FROM STDIN WITH(FORMAT csv, HEADER true);
                 """;
     }

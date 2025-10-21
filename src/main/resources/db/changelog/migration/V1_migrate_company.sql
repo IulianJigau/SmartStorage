@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS company (
-    process_id              INTEGER,
+    process_id              INTEGER NOT NULL,
     corporate_number        BIGINT,
     representative_position VARCHAR(100),
     representative_name     VARCHAR(255),

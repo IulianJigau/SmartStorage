@@ -4,20 +4,36 @@
 
 <mapper namespace="com.java.test.smartstorage.mapper.CompanyMapper">
 
+<!--    <delete id="removeDuplicates">-->
+<!--        DELETE-->
+<!--        FROM company-->
+<!--        WHERE process_id NOT IN-->
+<!--              (SELECT MIN(process_id) FROM company GROUP BY corporate_number, update_date); </delete>-->
+
+    <delete id="removeDuplicates">
+        DELETE
+        FROM company
+            USING (SELECT MIN(process_id) as keep_process_id, corporate_number, update_date
+                   FROM company
+                   GROUP BY corporate_number, update_date) reference
+        WHERE company.corporate_number = reference.corporate_number
+          AND company.update_date = reference.update_date
+          AND company.process_id != reference.keep_process_id
+    </delete>
+
     <delete id="dropIndex">
         DROP INDEX IF EXISTS company_index;
     </delete>
 
     <insert id="createIndex">
-        CREATE INDEX company_index ON company (corporate_number, process_id);
+        CREATE INDEX company_index ON company (corporate_number, update_date);
     </insert>
 
     <select id="getPage" resultMap="companyResultMap">
         SELECT *
         FROM company
         ORDER BY process_id DESC
-        LIMIT #{size}
-        OFFSET #{size} * (#{page} - 1)
+        LIMIT #{size} OFFSET #{size} * (#{page} - 1)
     </select>
 
     <select id="getTotalEntries">
@@ -26,21 +42,21 @@
     </select>
 
     <delete id="deleteAll">
-        DELETE FROM company;
+        TRUNCATE company;
     </delete>
 
     <resultMap id="companyResultMap" type="Company">
-        <id property="processId" column="process_id" />
-        <id property="corporateNumber" column="corporate_number" />
-        <result property="representativePosition" column="representative_position" />
-        <result property="representativeName" column="representative_name" />
-        <result property="postalCode" column="postal_code" />
-        <result property="location" column="location" />
-        <result property="name" column="name" />
-        <result property="kana" column="kana" />
-        <result property="status" column="status" />
-        <result property="qualificationGrade" column="qualification_grade" />
-        <result property="updateDate" column="update_date" />
-        <result property="dateOfEstablishment" column="date_of_establishment" />
+        <id property="processId" column="process_id"/>
+        <id property="corporateNumber" column="corporate_number"/>
+        <result property="representativePosition" column="representative_position"/>
+        <result property="representativeName" column="representative_name"/>
+        <result property="postalCode" column="postal_code"/>
+        <result property="location" column="location"/>
+        <result property="name" column="name"/>
+        <result property="kana" column="kana"/>
+        <result property="status" column="status"/>
+        <result property="qualificationGrade" column="qualification_grade"/>
+        <result property="updateDate" column="update_date"/>
+        <result property="dateOfEstablishment" column="date_of_establishment"/>
     </resultMap>
 </mapper>

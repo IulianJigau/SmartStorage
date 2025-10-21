@@ -16,4 +16,6 @@ public interface CompanyService {
     PaginationResponse<Company> getPage(Integer page, Integer size);
 
     void delete();
+
+    void removeDuplicates();
 }

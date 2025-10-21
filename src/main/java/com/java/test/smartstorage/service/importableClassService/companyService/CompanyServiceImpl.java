@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service.companyService;
+package com.java.test.smartstorage.service.importableClassService.companyService;
 
 import com.java.test.smartstorage.mapper.CompanyMapper;
 import com.java.test.smartstorage.model.Process;
@@ -30,21 +30,7 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
-        Process process = new Process();
-
-        return outputStream -> {
-            Utility.writeOutput("Dropping the index", outputStream);
-            dropIndex();
-
-            Utility.writeOutput("Processing files", outputStream);
-            importService.importEntity(new Company(), file, outputStream, process);
-
-            Utility.writeOutput("Creating the index", outputStream);
-            createIndex();
-
-            Utility.writeOutput("Removing Duplicates", outputStream);
-            removeDuplicates();
-        };
+        return importService.initializeImportProcess(file, this, new Company());
     }
 
     @Override

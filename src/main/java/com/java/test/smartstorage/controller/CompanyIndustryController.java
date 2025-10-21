@@ -1,7 +1,7 @@
 package com.java.test.smartstorage.controller;
 
 import com.java.test.smartstorage.model.response.PaginationResponse;
-import com.java.test.smartstorage.service.companyIndustryService.CompanyIndustryService;
+import com.java.test.smartstorage.service.importableClassService.companyIndustryService.CompanyIndustryService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;

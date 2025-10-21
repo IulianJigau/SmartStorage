@@ -13,6 +13,7 @@ import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
 import com.java.test.smartstorage.model.jsonMap.Identifiable;
 import com.java.test.smartstorage.model.jsonMap.Mapper;
+import com.java.test.smartstorage.service.importableClassService.ImportableClassService;
 import com.java.test.smartstorage.util.Utility;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.postgresql.copy.CopyManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.sql.DataSource;
 import java.io.*;
@@ -177,47 +179,67 @@ public class ImportService {
     public <T extends Identifiable & Mapper<T, R>, R> void importEntity(T mapObject, MultipartFile file, OutputStream outputStream, Process process) {
         Utility.resetCounter();
 
-        try {
-            initializeReadWrite(
-                    pipedWriter -> executeUsingSequenceWriter(
-                            pipedWriter,
-                            mapObject.retrieveFlatClass(),
-                            sequenceWriter -> executeOnExtraction(
-                                    file,
-                                    openedFile -> {
-                                        validateFileName(openedFile.getName(), JSON_EXTENSION);
-                                        executeUsingJsonParser(
-                                                openedFile.getInputStream(),
-                                                parser_array -> iterateJsonArray(
-                                                        parser_array,
-                                                        parser_object ->
-                                                        {
-                                                            T object = mapJsonObject(parser_object, mapObject.retrieveInitialClass());
-                                                            object.setProcessId(process.getId());
-                                                            List<R> transformedObject = object.flatten();
-                                                            writeSequence(sequenceWriter, transformedObject);
-                                                        }
-                                                )
+        initializeReadWrite(
+                pipedWriter -> executeUsingSequenceWriter(
+                        pipedWriter,
+                        mapObject.retrieveFlatClass(),
+                        sequenceWriter -> executeOnExtraction(
+                                file,
+                                openedFile -> {
+                                    validateFileName(openedFile.getName(), JSON_EXTENSION);
+                                    executeUsingJsonParser(
+                                            openedFile.getInputStream(),
+                                            parser_array -> iterateJsonArray(
+                                                    parser_array,
+                                                    parser_object ->
+                                                    {
+                                                        T object = mapJsonObject(parser_object, mapObject.retrieveInitialClass());
+                                                        object.setProcessId(process.getId());
+                                                        List<R> transformedObject = object.flatten();
+                                                        writeSequence(sequenceWriter, transformedObject);
+                                                    }
+                                            )
 
-                                        );
-                                        Utility.writeOutput("Files processed: " + Utility.getCounter(), outputStream);
-                                        process.incrementProcessedFiles();
-                                    }
-                            )
-                    ),
-                    pipedReader -> executeWithCopyManager(
-                            copyManager -> copyFromPipe(
-                                    copyManager,
-                                    pipedReader,
-                                    mapObject.retrieveCopyQuery()
-                            )
-                    )
-            );
-        } catch (Exception e) {
-            process.setFailed(e.getMessage());
-            throw e;
-        }
+                                    );
+                                    Utility.writeOutput("Files processed: " + Utility.getCounter(), outputStream);
+                                    process.incrementProcessedFiles();
+                                }
+                        )
+                ),
+                pipedReader -> executeWithCopyManager(
+                        copyManager -> copyFromPipe(
+                                copyManager,
+                                pipedReader,
+                                mapObject.retrieveCopyQuery()
+                        )
+                )
+        );
+    }
 
-        process.setCompleted("Import completed successfully");
+    public <T extends Identifiable & Mapper<T, R>, R> StreamingResponseBody initializeImportProcess(MultipartFile file, ImportableClassService importableClassService, T mapObject) {
+        Process process = new Process().initialize();
+
+        return outputStream -> {
+            try {
+                Utility.writeOutput("Dropping the index", outputStream);
+                importableClassService.dropIndex();
+
+                Utility.writeOutput("Processing files", outputStream);
+                importEntity(mapObject, file, outputStream, process);
+
+                Utility.writeOutput("Creating the index", outputStream);
+                importableClassService.createIndex();
+
+                process.setDeduplicating();
+                Utility.writeOutput("Removing Duplicates", outputStream);
+                importableClassService.removeDuplicates();
+
+            } catch (Exception e) {
+                process.setFailed(e.getMessage());
+                throw e;
+            }
+
+            process.setCompleted("Import completed successfully");
+        };
     }
 }

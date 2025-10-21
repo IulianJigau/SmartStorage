@@ -1,4 +1,5 @@
 INSERT INTO status (id, name) VALUES
-      (1, 'IN_PROGRESS'),
-      (2, 'COMPLETED'),
-      (3, 'FAILED');
+      (1, 'PROCESSING'),
+      (2, 'DEDUPLICATING'),
+      (3, 'COMPLETED'),
+      (4, 'FAILED');

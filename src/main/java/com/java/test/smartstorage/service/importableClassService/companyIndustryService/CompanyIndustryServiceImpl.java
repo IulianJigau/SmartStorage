@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service.companyIndustryService;
+package com.java.test.smartstorage.service.importableClassService.companyIndustryService;
 
 import com.java.test.smartstorage.mapper.CompanyIndustryMapper;
 import com.java.test.smartstorage.model.Process;
@@ -21,32 +21,18 @@ public class CompanyIndustryServiceImpl implements CompanyIndustryService {
     private final ImportService importService;
 
     @Override
-    public void dropIndex(){
+    public void dropIndex() {
         companyIndustryMapper.dropIndex();
     }
 
     @Override
-    public void createIndex(){
+    public void createIndex() {
         companyIndustryMapper.createIndex();
     }
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
-        Process process = new Process();
-
-        return outputStream -> {
-            Utility.writeOutput("Dropping the index", outputStream);
-            dropIndex();
-
-            Utility.writeOutput("Processing files", outputStream);
-            importService.importEntity(new CompanyIndustry(), file, outputStream, process);
-
-            Utility.writeOutput("Creating the index", outputStream);
-            createIndex();
-
-            Utility.writeOutput("Removing Duplicates", outputStream);
-            removeDuplicates();
-        };
+        return importService.initializeImportProcess(file, this, new CompanyIndustry());
     }
 
     @Override

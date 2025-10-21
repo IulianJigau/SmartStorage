@@ -2,9 +2,7 @@ package com.java.test.smartstorage.model;
 
 import com.java.test.smartstorage.component.StatusCodes;
 import com.java.test.smartstorage.service.processService.ProcessService;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
@@ -14,6 +12,7 @@ import java.time.OffsetDateTime;
 public class Process {
     private static ProcessService processService;
     private static StatusCodes statusCodes;
+
     private int id;
     private int status;
     private int filesProcessed;
@@ -26,12 +25,17 @@ public class Process {
         Process.statusCodes = statusCodes;
     }
 
-    public Process() {
+    public Process initialize() {
         id = processService.create();
+        return this;
     }
 
     public void incrementProcessedFiles() {
         processService.incrementProcessedFiles(id);
+    }
+
+    public void setDeduplicating() {
+        processService.updateStatus(id, statusCodes.getFailed(), null);
     }
 
     public void setFailed(String message) {

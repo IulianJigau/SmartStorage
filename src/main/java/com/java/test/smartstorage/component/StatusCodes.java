@@ -10,7 +10,8 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 public class StatusCodes {
-    private int inProgress;
+    private int processing;
+    private int deduplicating;
     private int completed;
     private int failed;
 }

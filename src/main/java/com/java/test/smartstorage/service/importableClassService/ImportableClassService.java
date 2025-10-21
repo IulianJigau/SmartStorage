@@ -1,19 +1,17 @@
-package com.java.test.smartstorage.service.companyService;
+package com.java.test.smartstorage.service.importableClassService;
 
-import com.java.test.smartstorage.model.jsonMap.Company;
 import com.java.test.smartstorage.model.response.PaginationResponse;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-public interface CompanyService {
-
+public interface ImportableClassService {
     void dropIndex();
 
     void createIndex();
 
     StreamingResponseBody importFromArchive(MultipartFile file);
 
-    PaginationResponse<Company> getPage(Integer page, Integer size);
+    PaginationResponse<?> getPage(Integer page, Integer size);
 
     void delete();
 

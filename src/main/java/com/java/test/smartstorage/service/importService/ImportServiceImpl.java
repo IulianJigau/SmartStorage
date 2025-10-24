@@ -244,6 +244,8 @@ public class ImportServiceImpl implements ImportService {
                     process.setDeduplicating();
                     Utility.writeOutput("Removing Duplicates", outputStream);
                     importableService.removeDuplicates();
+
+                    process.setCompleted("Import completed successfully");
                 }
             } catch (ControlledException e) {
                 process.setFailed(e.getMessage());
@@ -251,8 +253,6 @@ public class ImportServiceImpl implements ImportService {
                 process.setFailed("Critical error occurred");
                 throw e;
             }
-
-            process.setCompleted("Import completed successfully");
         };
     }
 }

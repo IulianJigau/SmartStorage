@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.model.jsonMap.companyIndustry;
+package com.java.test.smartstorage.model.intermediary;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,9 +6,9 @@ import lombok.Setter;
 
 import java.time.OffsetDateTime;
 
-@AllArgsConstructor
 @Setter
 @Getter
+@AllArgsConstructor
 public class CompanyIndustryFlat {
     private int processId;
     private Long corporateNumber;

@@ -8,12 +8,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.java.test.smartstorage.exception.ResourceValidationException;
+import com.java.test.smartstorage.config.importSettings.ImportSettings;
+import com.java.test.smartstorage.exception.ControlledException;
+import com.java.test.smartstorage.exception.controlledException.ResourceValidationException;
 import com.java.test.smartstorage.model.Process;
+import com.java.test.smartstorage.model.identifiable.Identifiable;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
-import com.java.test.smartstorage.model.jsonMap.Identifiable;
-import com.java.test.smartstorage.model.jsonMap.Mapper;
-import com.java.test.smartstorage.service.importableClassService.ImportableClassService;
+import com.java.test.smartstorage.service.queryableService.importableService.ImportableService;
 import com.java.test.smartstorage.util.Utility;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +30,10 @@ import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -38,7 +41,6 @@ import java.util.zip.ZipInputStream;
 @Service
 @RequiredArgsConstructor
 public class ImportService {
-    private static final String SQL_CONFLICT_CODE = "23505";
     private static final String JSON_EXTENSION = ".json";
     private final ObjectMapper objectMapper;
     private final DataSource dataSource;
@@ -52,32 +54,13 @@ public class ImportService {
                 .build();
     }
 
-    private void checkSQLExceptionCode(SQLException e) {
-        switch (e.getSQLState()) {
-            case SQL_CONFLICT_CODE:
-                throw new ResourceValidationException("Duplicate keys detected. Cannot proceed.");
-            default:
-                throw new RuntimeException("Failed to add the data to the database", e);
-        }
-    }
-
     private void copyFromPipe(CopyManager copyManager, PipedReader pipedReader, String sqlCopy) {
         try {
             copyManager.copyIn(sqlCopy, pipedReader);
         } catch (IOException e) {
             throw new RuntimeException("Failed to initialize the copy sequence", e);
         } catch (SQLException e) {
-            checkSQLExceptionCode(e);
-        }
-    }
-
-    private void executeWithCopyManager(Consumer<CopyManager> copyManagerConsumer) {
-        try (Connection conn = DataSourceUtils.getConnection(dataSource)) {
-            PGConnection pgConn = conn.unwrap(PGConnection.class);
-            CopyManager copyManager = pgConn.getCopyAPI();
-            copyManagerConsumer.accept(copyManager);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to get the database copy manager", e);
+            Utility.checkSQLExceptionCode(e);
         }
     }
 
@@ -163,79 +146,105 @@ public class ImportService {
         }
     }
 
-
     private void initializeReadWrite(Consumer<PipedWriter> writer, Consumer<PipedReader> reader) {
         try (PipedWriter pipedWriter = new PipedWriter();
              PipedReader pipedReader = new PipedReader(pipedWriter);
              ExecutorService executor = Executors.newSingleThreadExecutor()) {
 
-            executor.submit(() -> writer.accept(pipedWriter));
+            Future<?> future = executor.submit(() -> writer.accept(pipedWriter));
             reader.accept(pipedReader);
+            future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            try {
+                throw e.getCause();
+            } catch (Throwable ex) {
+                throw new RuntimeException("Executor error report failure", ex);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Failed to initialize the PipedWriter/Reader", e);
         }
     }
 
-    public <T extends Identifiable & Mapper<T, R>, R> void importEntity(T mapObject, MultipartFile file, OutputStream outputStream, Process process) {
-        Utility.resetCounter();
+    private void executeWithCopyManager(Consumer<CopyManager> copyManagerConsumer) {
+        try (Connection conn = DataSourceUtils.getConnection(dataSource)) {
+            conn.setAutoCommit(false);
 
-        initializeReadWrite(
-                pipedWriter -> executeUsingSequenceWriter(
-                        pipedWriter,
-                        mapObject.retrieveFlatClass(),
-                        sequenceWriter -> executeOnExtraction(
-                                file,
-                                openedFile -> {
-                                    validateFileName(openedFile.getName(), JSON_EXTENSION);
-                                    executeUsingJsonParser(
-                                            openedFile.getInputStream(),
-                                            parser_array -> iterateJsonArray(
-                                                    parser_array,
-                                                    parser_object ->
-                                                    {
-                                                        T object = mapJsonObject(parser_object, mapObject.retrieveInitialClass());
-                                                        object.setProcessId(process.getId());
-                                                        List<R> transformedObject = object.flatten();
-                                                        writeSequence(sequenceWriter, transformedObject);
-                                                    }
-                                            )
+            PGConnection pgConn = conn.unwrap(PGConnection.class);
+            CopyManager copyManager = pgConn.getCopyAPI();
 
-                                    );
-                                    Utility.writeOutput("Files processed: " + Utility.getCounter(), outputStream);
-                                    process.incrementProcessedFiles();
-                                }
-                        )
-                ),
-                pipedReader -> executeWithCopyManager(
-                        copyManager -> copyFromPipe(
+            try {
+                copyManagerConsumer.accept(copyManager);
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get the database copy manager", e);
+        }
+    }
+
+    public <T extends Identifiable, R> void importEntity(MultipartFile file, OutputStream outputStream, Process process, ImportSettings<T, R> importSettings) {
+        executeWithCopyManager(
+                copyManager -> initializeReadWrite(
+                        pipedWriter -> executeUsingSequenceWriter(
+                                pipedWriter,
+                                importSettings.getOutputClass(),
+                                sequenceWriter -> executeOnExtraction(
+                                        file,
+                                        openedFile -> {
+                                            validateFileName(openedFile.getName(), JSON_EXTENSION);
+                                            executeUsingJsonParser(
+                                                    openedFile.getInputStream(),
+                                                    parser_array -> iterateJsonArray(
+                                                            parser_array,
+                                                            parser_object ->
+                                                            {
+                                                                T object = mapJsonObject(parser_object, importSettings.getInputClass());
+                                                                object.setProcessId(process.getId());
+                                                                List<R> transformedObject = importSettings.transform(object);
+                                                                writeSequence(sequenceWriter, transformedObject);
+                                                            }
+                                                    )
+                                            );
+                                            process.incrementProcessedFiles();
+                                            Utility.writeOutput("Files processed: " + process.getFilesProcessed(), outputStream);
+                                        }
+                                )
+                        ),
+                        pipedReader -> copyFromPipe(
                                 copyManager,
                                 pipedReader,
-                                mapObject.retrieveCopyQuery()
+                                importSettings.getSqlCopyQuery()
+
                         )
                 )
         );
     }
 
-    public <T extends Identifiable & Mapper<T, R>, R> StreamingResponseBody initializeImportProcess(MultipartFile file, ImportableClassService importableClassService, T mapObject) {
+    public <T extends Identifiable, R> StreamingResponseBody initializeImportProcess(MultipartFile file, ImportableService importableService, ImportSettings<T, R> importSettings) {
         Process process = new Process().initialize();
 
         return outputStream -> {
             try {
                 Utility.writeOutput("Dropping the index", outputStream);
-                importableClassService.dropIndex();
+                importableService.dropIndex();
 
                 Utility.writeOutput("Processing files", outputStream);
-                importEntity(mapObject, file, outputStream, process);
+                importEntity(file, outputStream, process, importSettings);
 
                 Utility.writeOutput("Creating the index", outputStream);
-                importableClassService.createIndex();
+                importableService.createIndex();
 
                 process.setDeduplicating();
                 Utility.writeOutput("Removing Duplicates", outputStream);
-                importableClassService.removeDuplicates();
+                importableService.removeDuplicates();
 
-            } catch (Exception e) {
+            } catch (ControlledException e) {
                 process.setFailed(e.getMessage());
+            } catch (Exception e) {
+                process.setFailed("Critical error occurred");
                 throw e;
             }
 

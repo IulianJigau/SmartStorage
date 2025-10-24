@@ -1,7 +1,7 @@
 package com.java.test.smartstorage.model;
 
 import com.java.test.smartstorage.component.StatusCodes;
-import com.java.test.smartstorage.service.processService.ProcessService;
+import com.java.test.smartstorage.service.queryableService.processService.ProcessService;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,15 +27,17 @@ public class Process {
 
     public Process initialize() {
         id = processService.create();
+        filesProcessed = 0;
         return this;
     }
 
     public void incrementProcessedFiles() {
         processService.incrementProcessedFiles(id);
+        filesProcessed++;
     }
 
     public void setDeduplicating() {
-        processService.updateStatus(id, statusCodes.getFailed(), null);
+        processService.updateStatus(id, statusCodes.getDeduplicating(), null);
     }
 
     public void setFailed(String message) {

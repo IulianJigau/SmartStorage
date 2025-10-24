@@ -5,8 +5,8 @@ import lombok.Getter;
 
 import java.io.InputStream;
 
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 public class OpenedFile {
     private String name;
     private InputStream inputStream;

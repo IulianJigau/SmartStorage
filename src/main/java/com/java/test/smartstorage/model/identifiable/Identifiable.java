@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.model.jsonMap;
+package com.java.test.smartstorage.model.identifiable;
 
 public interface Identifiable {
 

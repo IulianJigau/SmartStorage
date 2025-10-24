@@ -3,7 +3,7 @@ package com.java.test.smartstorage.service.queryableService.importableService.co
 import com.java.test.smartstorage.config.importSettings.CompanyImportSettings;
 import com.java.test.smartstorage.mapper.importableMapper.CompanyMapper;
 import com.java.test.smartstorage.model.identifiable.Company;
-import com.java.test.smartstorage.service.ImportServiceImpl;
+import com.java.test.smartstorage.service.importService.ImportServiceImpl;
 import com.java.test.smartstorage.service.queryableService.importableService.ImportableServiceAbs;
 import org.springframework.stereotype.Service;
 

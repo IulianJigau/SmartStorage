@@ -4,7 +4,7 @@ import com.java.test.smartstorage.config.importSettings.CompanyIndustryImportSet
 import com.java.test.smartstorage.mapper.importableMapper.CompanyIndustryMapper;
 import com.java.test.smartstorage.model.identifiable.CompanyIndustry;
 import com.java.test.smartstorage.model.intermediary.CompanyIndustryFlat;
-import com.java.test.smartstorage.service.ImportServiceImpl;
+import com.java.test.smartstorage.service.importService.ImportServiceImpl;
 import com.java.test.smartstorage.service.queryableService.importableService.ImportableServiceAbs;
 import org.springframework.stereotype.Service;
 

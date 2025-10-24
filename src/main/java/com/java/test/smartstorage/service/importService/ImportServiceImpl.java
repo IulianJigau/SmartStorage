@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service;
+package com.java.test.smartstorage.service.importService;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;

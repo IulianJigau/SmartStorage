@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service;
+package com.java.test.smartstorage.service.importService;
 
 import com.java.test.smartstorage.config.importSettings.ImportSettings;
 import com.java.test.smartstorage.model.identifiable.Identifiable;

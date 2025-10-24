@@ -4,6 +4,17 @@
 
 <mapper namespace="com.java.test.smartstorage.mapper.importableMapper.CompanyIndustryMapper">
 
+    <select id="checkIndexingProcessExistence" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM pg_locks
+            INNER JOIN pg_class
+            ON pg_locks.relation = pg_class.oid
+            WHERE pg_class.relname = 'company_industry'
+            AND pg_locks.mode = 'ShareLock'
+        )
+    </select>
+
     <delete id="removeDuplicates">
         DELETE
         FROM company_industry

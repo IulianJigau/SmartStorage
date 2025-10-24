@@ -5,6 +5,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 public interface ImportableService extends QueryableService {
+    boolean checkIndexingProcessExistence();
+
     void dropIndex();
 
     void createIndex();

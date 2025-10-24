@@ -1,11 +1,11 @@
-package com.java.test.smartstorage.service.queryableService.importableService;
+package com.java.test.smartstorage.service.queryable.importable;
 
 import com.java.test.smartstorage.config.importSettings.ImportSettings;
-import com.java.test.smartstorage.mapper.importableMapper.ImportableMapper;
+import com.java.test.smartstorage.mapper.importable.ImportableMapper;
 import com.java.test.smartstorage.model.identifiable.Identifiable;
-import com.java.test.smartstorage.service.importService.ImportService;
-import com.java.test.smartstorage.service.importService.ImportServiceImpl;
-import com.java.test.smartstorage.service.queryableService.QueryableServiceAbs;
+import com.java.test.smartstorage.service.importJson.ImportService;
+import com.java.test.smartstorage.service.importJson.ImportServiceImpl;
+import com.java.test.smartstorage.service.queryable.QueryableServiceAbs;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 

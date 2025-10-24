@@ -1,11 +1,11 @@
-package com.java.test.smartstorage.service.queryableService.importableService.companyIndustryService;
+package com.java.test.smartstorage.service.queryable.importable.companyIndustry;
 
 import com.java.test.smartstorage.config.importSettings.CompanyIndustryImportSettings;
-import com.java.test.smartstorage.mapper.importableMapper.CompanyIndustryMapper;
+import com.java.test.smartstorage.mapper.importable.CompanyIndustryMapper;
 import com.java.test.smartstorage.model.identifiable.CompanyIndustry;
 import com.java.test.smartstorage.model.intermediary.CompanyIndustryFlat;
-import com.java.test.smartstorage.service.importService.ImportServiceImpl;
-import com.java.test.smartstorage.service.queryableService.importableService.ImportableServiceAbs;
+import com.java.test.smartstorage.service.importJson.ImportServiceImpl;
+import com.java.test.smartstorage.service.queryable.importable.ImportableServiceAbs;
 import org.springframework.stereotype.Service;
 
 @Service

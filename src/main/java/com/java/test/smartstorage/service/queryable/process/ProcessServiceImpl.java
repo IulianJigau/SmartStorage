@@ -1,7 +1,7 @@
-package com.java.test.smartstorage.service.queryableService.processService;
+package com.java.test.smartstorage.service.queryable.process;
 
 import com.java.test.smartstorage.mapper.ProcessMapper;
-import com.java.test.smartstorage.service.queryableService.QueryableServiceAbs;
+import com.java.test.smartstorage.service.queryable.QueryableServiceAbs;
 import org.springframework.stereotype.Service;
 
 @Service

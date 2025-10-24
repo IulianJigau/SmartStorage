@@ -1,7 +1,7 @@
 package com.java.test.smartstorage.model;
 
 import com.java.test.smartstorage.component.StatusCodes;
-import com.java.test.smartstorage.service.queryableService.processService.ProcessService;
+import com.java.test.smartstorage.service.queryable.process.ProcessService;
 import lombok.Getter;
 import lombok.Setter;
 

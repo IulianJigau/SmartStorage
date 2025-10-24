@@ -1,6 +1,6 @@
-package com.java.test.smartstorage.controller.QueryableController;
+package com.java.test.smartstorage.controller.Queryable;
 
-import com.java.test.smartstorage.service.queryableService.processService.ProcessService;
+import com.java.test.smartstorage.service.queryable.process.ProcessService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

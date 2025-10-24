@@ -1,7 +1,7 @@
-package com.java.test.smartstorage.controller.QueryableController;
+package com.java.test.smartstorage.controller.Queryable;
 
 import com.java.test.smartstorage.model.response.PaginationResponse;
-import com.java.test.smartstorage.service.queryableService.QueryableService;
+import com.java.test.smartstorage.service.queryable.QueryableService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
-package com.java.test.smartstorage.service.queryableService.importableService;
+package com.java.test.smartstorage.service.queryable.importable;
 
-import com.java.test.smartstorage.service.queryableService.QueryableService;
+import com.java.test.smartstorage.service.queryable.QueryableService;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 

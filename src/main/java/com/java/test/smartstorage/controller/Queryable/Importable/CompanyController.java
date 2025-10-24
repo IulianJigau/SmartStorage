@@ -1,6 +1,6 @@
-package com.java.test.smartstorage.controller.QueryableController.ImportableController;
+package com.java.test.smartstorage.controller.Queryable.Importable;
 
-import com.java.test.smartstorage.service.queryableService.importableService.companyService.CompanyService;
+import com.java.test.smartstorage.service.queryable.importable.company.CompanyService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

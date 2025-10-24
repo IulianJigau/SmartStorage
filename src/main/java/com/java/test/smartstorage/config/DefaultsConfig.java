@@ -2,7 +2,7 @@ package com.java.test.smartstorage.config;
 
 import com.java.test.smartstorage.component.StatusCodes;
 import com.java.test.smartstorage.model.Process;
-import com.java.test.smartstorage.service.queryableService.processService.ProcessService;
+import com.java.test.smartstorage.service.queryable.process.ProcessService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

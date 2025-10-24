@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service.queryableService;
+package com.java.test.smartstorage.service.queryable;
 
 import com.java.test.smartstorage.model.response.PaginationResponse;
 

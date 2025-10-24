@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.service.importService;
+package com.java.test.smartstorage.service.importJson;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -14,7 +14,7 @@ import com.java.test.smartstorage.exception.controlledException.ResourceValidati
 import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.identifiable.Identifiable;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
-import com.java.test.smartstorage.service.queryableService.importableService.ImportableService;
+import com.java.test.smartstorage.service.queryable.importable.ImportableService;
 import com.java.test.smartstorage.util.Utility;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

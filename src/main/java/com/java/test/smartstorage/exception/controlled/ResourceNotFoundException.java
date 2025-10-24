@@ -1,4 +1,4 @@
-package com.java.test.smartstorage.exception.controlledException;
+package com.java.test.smartstorage.exception.controlled;
 
 import com.java.test.smartstorage.exception.ControlledException;
 

@@ -10,7 +10,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.java.test.smartstorage.config.importSettings.ImportSettings;
 import com.java.test.smartstorage.exception.ControlledException;
-import com.java.test.smartstorage.exception.controlledException.ResourceValidationException;
+import com.java.test.smartstorage.exception.controlled.ResourceValidationException;
 import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.identifiable.Identifiable;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;

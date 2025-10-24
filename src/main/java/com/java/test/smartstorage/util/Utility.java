@@ -1,6 +1,6 @@
 package com.java.test.smartstorage.util;
 
-import com.java.test.smartstorage.exception.controlledException.ResourceValidationException;
+import com.java.test.smartstorage.exception.controlled.ResourceValidationException;
 import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 
 import java.io.IOException;

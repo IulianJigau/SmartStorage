@@ -8,11 +8,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.java.test.smartstorage.config.importSettings.ImportSettings;
 import com.java.test.smartstorage.exception.ControlledException;
 import com.java.test.smartstorage.exception.controlled.ResourceValidationException;
 import com.java.test.smartstorage.model.Process;
 import com.java.test.smartstorage.model.identifiable.Identifiable;
+import com.java.test.smartstorage.model.intermediary.ImportAttributes;
 import com.java.test.smartstorage.model.intermediary.OpenedFile;
 import com.java.test.smartstorage.service.queryable.importable.ImportableService;
 import com.java.test.smartstorage.util.Utility;
@@ -188,12 +188,12 @@ public class ImportServiceImpl implements ImportService {
         }
     }
 
-    private <T extends Identifiable, R> void initializeWriteProcess(PipedWriter pipedWriter, Process process, ImportSettings<T, R> importSettings, OutputStream outputStream, MultipartFile file){
+    private <T extends Identifiable, R> void initializeWriteProcess(PipedWriter pipedWriter, ImportAttributes<T, R> importAttributes, Process process) {
         executeUsingSequenceWriter(
                 pipedWriter,
-                importSettings.getOutputClass(),
+                importAttributes.getImportSettings().getOutputClass(),
                 sequenceWriter -> executeOnExtraction(
-                        file,
+                        importAttributes.getFile(),
                         openedFile -> {
                             validateFileName(openedFile.getName(), JSON_EXTENSION);
                             executeUsingJsonParser(
@@ -202,50 +202,50 @@ public class ImportServiceImpl implements ImportService {
                                             parser_array,
                                             parser_object ->
                                             {
-                                                T object = mapJsonObject(parser_object, importSettings.getInputClass());
+                                                T object = mapJsonObject(parser_object, importAttributes.getImportSettings().getInputClass());
                                                 object.setProcessId(process.getId());
-                                                List<R> transformedObject = importSettings.transform(object);
+                                                List<R> transformedObject = importAttributes.getImportSettings().transform(object);
                                                 writeSequence(sequenceWriter, transformedObject);
                                             }
                                     )
                             );
                             process.incrementProcessedFiles();
-                            Utility.writeOutput("Files processed: " + process.getFilesProcessed(), outputStream);
+                            Utility.writeOutput("Files processed: " + process.getFilesProcessed(), importAttributes.getOutputStream());
                         }
                 )
         );
     }
 
-    public <T extends Identifiable, R> void importEntity(MultipartFile file, OutputStream outputStream, Process process, ImportSettings<T, R> importSettings) {
+    public <T extends Identifiable, R> void importEntity(ImportAttributes<T, R> importAttributes, Process process) {
         executeWithCopyManager(
                 copyManager -> initializeReadWrite(
-                        pipedWriter -> initializeWriteProcess(pipedWriter, process, importSettings, outputStream, file),
-                        pipedReader -> copyFromPipe(pipedReader, copyManager, importSettings.getSqlCopyQuery())
+                        pipedWriter -> initializeWriteProcess(pipedWriter, importAttributes, process),
+                        pipedReader -> copyFromPipe(pipedReader, copyManager, importAttributes.getImportSettings().getSqlCopyQuery())
                 )
         );
     }
 
     @Override
-    public <T extends Identifiable, R> void initializeImportProcess(MultipartFile file, ImportableService importableService, ImportSettings<T, R> importSettings, OutputStream outputStream) {
+    public <T extends Identifiable, R> void initializeImportProcess(ImportAttributes<T, R> importAttributes, ImportableService importableService) {
         Process process = new Process().initialize();
 
         try {
-            Utility.writeOutput("Dropping the index", outputStream);
+            Utility.writeOutput("Dropping the index", importAttributes.getOutputStream());
             importableService.dropIndex();
 
-            Utility.writeOutput("Processing files", outputStream);
-            importEntity(file, outputStream, process, importSettings);
+            Utility.writeOutput("Processing files", importAttributes.getOutputStream());
+            importEntity(importAttributes, process);
 
             if (importableService.checkIndexingProcessExistence()) {
                 process.setCompleted("Indexing and deduplication skipped due to them being already queued");
                 return;
             }
 
-            Utility.writeOutput("Creating the index", outputStream);
+            Utility.writeOutput("Creating the index", importAttributes.getOutputStream());
             importableService.createIndex();
 
             process.setDeduplicating();
-            Utility.writeOutput("Removing Duplicates", outputStream);
+            Utility.writeOutput("Removing Duplicates", importAttributes.getOutputStream());
             importableService.removeDuplicates();
 
             process.setCompleted("Import completed successfully");

@@ -3,6 +3,7 @@ package com.java.test.smartstorage.service.queryable.importable;
 import com.java.test.smartstorage.config.importSettings.ImportSettings;
 import com.java.test.smartstorage.mapper.importable.ImportableMapper;
 import com.java.test.smartstorage.model.identifiable.Identifiable;
+import com.java.test.smartstorage.model.intermediary.ImportAttributes;
 import com.java.test.smartstorage.service.importJson.ImportService;
 import com.java.test.smartstorage.service.importJson.ImportServiceImpl;
 import com.java.test.smartstorage.service.queryable.QueryableServiceAbs;
@@ -38,7 +39,10 @@ public abstract class ImportableServiceAbs<T extends Identifiable, R> extends Qu
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
-        return outputstream -> importService.initializeImportProcess(file, this, importSettings, outputstream);
+        return outputstream -> {
+            ImportAttributes<T, R> importAttributes = new ImportAttributes<>(file, importSettings, outputstream);
+            importService.initializeImportProcess(importAttributes, this);
+        };
     }
 
     @Override

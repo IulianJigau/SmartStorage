@@ -38,7 +38,7 @@ public abstract class ImportableServiceAbs<T extends Identifiable, R> extends Qu
 
     @Override
     public StreamingResponseBody importFromArchive(MultipartFile file) {
-        return importService.initializeImportProcess(file, this, importSettings);
+        return outputstream -> importService.initializeImportProcess(file, this, importSettings, outputstream);
     }
 
     @Override

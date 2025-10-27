@@ -23,7 +23,6 @@ import org.postgresql.copy.CopyManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.sql.DataSource;
 import java.io.*;
@@ -54,7 +53,7 @@ public class ImportServiceImpl implements ImportService {
                 .build();
     }
 
-    private void copyFromPipe(CopyManager copyManager, PipedReader pipedReader, String sqlCopy) {
+    private void copyFromPipe(PipedReader pipedReader, CopyManager copyManager, String sqlCopy) {
         try {
             copyManager.copyIn(sqlCopy, pipedReader);
         } catch (IOException e) {
@@ -146,6 +145,14 @@ public class ImportServiceImpl implements ImportService {
         }
     }
 
+    private void throwErrorCause(Exception e) {
+        try {
+            throw e.getCause();
+        } catch (Throwable ex) {
+            throw new RuntimeException("Error report failure", ex);
+        }
+    }
+
     private void initializeReadWrite(Consumer<PipedWriter> writer, Consumer<PipedReader> reader) {
         try (PipedWriter pipedWriter = new PipedWriter();
              PipedReader pipedReader = new PipedReader(pipedWriter);
@@ -155,11 +162,7 @@ public class ImportServiceImpl implements ImportService {
             reader.accept(pipedReader);
             future.get();
         } catch (ExecutionException | InterruptedException e) {
-            try {
-                throw e.getCause();
-            } catch (Throwable ex) {
-                throw new RuntimeException("Executor error report failure", ex);
-            }
+            throwErrorCause(e);
         } catch (IOException e) {
             throw new RuntimeException("Failed to initialize the PipedWriter/Reader", e);
         }
@@ -185,74 +188,74 @@ public class ImportServiceImpl implements ImportService {
         }
     }
 
+    private <T extends Identifiable, R> void initializeWriteProcess(PipedWriter pipedWriter, Process process, ImportSettings<T, R> importSettings, OutputStream outputStream, MultipartFile file){
+        executeUsingSequenceWriter(
+                pipedWriter,
+                importSettings.getOutputClass(),
+                sequenceWriter -> executeOnExtraction(
+                        file,
+                        openedFile -> {
+                            validateFileName(openedFile.getName(), JSON_EXTENSION);
+                            executeUsingJsonParser(
+                                    openedFile.getInputStream(),
+                                    parser_array -> iterateJsonArray(
+                                            parser_array,
+                                            parser_object ->
+                                            {
+                                                T object = mapJsonObject(parser_object, importSettings.getInputClass());
+                                                object.setProcessId(process.getId());
+                                                List<R> transformedObject = importSettings.transform(object);
+                                                writeSequence(sequenceWriter, transformedObject);
+                                            }
+                                    )
+                            );
+                            process.incrementProcessedFiles();
+                            Utility.writeOutput("Files processed: " + process.getFilesProcessed(), outputStream);
+                        }
+                )
+        );
+    }
+
     public <T extends Identifiable, R> void importEntity(MultipartFile file, OutputStream outputStream, Process process, ImportSettings<T, R> importSettings) {
         executeWithCopyManager(
                 copyManager -> initializeReadWrite(
-                        pipedWriter -> executeUsingSequenceWriter(
-                                pipedWriter,
-                                importSettings.getOutputClass(),
-                                sequenceWriter -> executeOnExtraction(
-                                        file,
-                                        openedFile -> {
-                                            validateFileName(openedFile.getName(), JSON_EXTENSION);
-                                            executeUsingJsonParser(
-                                                    openedFile.getInputStream(),
-                                                    parser_array -> iterateJsonArray(
-                                                            parser_array,
-                                                            parser_object ->
-                                                            {
-                                                                T object = mapJsonObject(parser_object, importSettings.getInputClass());
-                                                                object.setProcessId(process.getId());
-                                                                List<R> transformedObject = importSettings.transform(object);
-                                                                writeSequence(sequenceWriter, transformedObject);
-                                                            }
-                                                    )
-                                            );
-                                            process.incrementProcessedFiles();
-                                            Utility.writeOutput("Files processed: " + process.getFilesProcessed(), outputStream);
-                                        }
-                                )
-                        ),
-                        pipedReader -> copyFromPipe(
-                                copyManager,
-                                pipedReader,
-                                importSettings.getSqlCopyQuery()
-
-                        )
+                        pipedWriter -> initializeWriteProcess(pipedWriter, process, importSettings, outputStream, file),
+                        pipedReader -> copyFromPipe(pipedReader, copyManager, importSettings.getSqlCopyQuery())
                 )
         );
     }
 
     @Override
-    public <T extends Identifiable, R> StreamingResponseBody initializeImportProcess(MultipartFile file, ImportableService importableService, ImportSettings<T, R> importSettings) {
+    public <T extends Identifiable, R> void initializeImportProcess(MultipartFile file, ImportableService importableService, ImportSettings<T, R> importSettings, OutputStream outputStream) {
         Process process = new Process().initialize();
 
-        return outputStream -> {
-            try {
-                Utility.writeOutput("Dropping the index", outputStream);
-                importableService.dropIndex();
+        try {
+            Utility.writeOutput("Dropping the index", outputStream);
+            importableService.dropIndex();
 
-                Utility.writeOutput("Processing files", outputStream);
-                importEntity(file, outputStream, process, importSettings);
+            Utility.writeOutput("Processing files", outputStream);
+            importEntity(file, outputStream, process, importSettings);
 
-                if (importableService.checkIndexingProcessExistence()) {
-                    process.setCompleted("Indexing and deduplication skipped due to them being already in progress");
-                } else {
-                    Utility.writeOutput("Creating the index", outputStream);
-                    importableService.createIndex();
-
-                    process.setDeduplicating();
-                    Utility.writeOutput("Removing Duplicates", outputStream);
-                    importableService.removeDuplicates();
-
-                    process.setCompleted("Import completed successfully");
-                }
-            } catch (ControlledException e) {
-                process.setFailed(e.getMessage());
-            } catch (Exception e) {
-                process.setFailed("Critical error occurred");
-                throw e;
+            if (importableService.checkIndexingProcessExistence()) {
+                process.setCompleted("Indexing and deduplication skipped due to them being already queued");
+                return;
             }
-        };
+
+            Utility.writeOutput("Creating the index", outputStream);
+            importableService.createIndex();
+
+            process.setDeduplicating();
+            Utility.writeOutput("Removing Duplicates", outputStream);
+            importableService.removeDuplicates();
+
+            process.setCompleted("Import completed successfully");
+
+        } catch (ControlledException e) {
+            process.setFailed(e.getMessage());
+        } catch (Exception e) {
+            process.setFailed("Critical error occurred");
+            throw e;
+        }
+
     }
 }
